@@ -6,7 +6,7 @@ Easy and simple way to deploy LibreTranslate into Azure App Service
 ## main.bicep
 When deploying `main.bicep` to azure, it will create a new Linux-based Azure App Service Plan and configure a new Azure Web App with the necessary settings and configuration to run [LibreTranslate](https://github.com/LibreTranslate/LibreTranslate) from Docker
 
-There is also an option to use your own Azyre Container Registry (ACR), by changing the `Container Registry` parameter to the URL of your custom registry.
+There is also an option to use your own Azure Container Registry (ACR), by changing the `Container Registry` parameter to the URL of your custom registry.
 
 Please note that in this example, `LibreTranslate` will only be configured to start with support for English, Arabic, and Chinese languages.
 
