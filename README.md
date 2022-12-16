@@ -8,3 +8,6 @@ This bicep file will generate a new linux based azure app service plan, and gene
 There is also an option to use your own ACR, by changing the `Container Registry` Parameter to have the custom registry URL
 
 Please note that in this example LibreTranslate will only start with 3 language: English, Arabic, and Chinese.
+
+## libretranslatepush.ps1
+This script can be use to pull LibreTransalte from Docker hub and push it to Azure Container Registry, just provide the script with the name of the ACR and the URL
