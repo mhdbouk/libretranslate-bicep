@@ -1,0 +1,160 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "5097297985577993280"
+    }
+  },
+  "parameters": {
+    "skuName": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "maxValue": 3,
+      "minValue": 1,
+      "metadata": {
+        "description": "Describes plan's instance count"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    },
+    "appPlanName": {
+      "type": "string",
+      "defaultValue": "[format('plan-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "App Service Plan Name."
+      }
+    },
+    "appName": {
+      "type": "string",
+      "defaultValue": "[format('app-libretranslate-{0}', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "App Service Name."
+      }
+    },
+    "containerRegistry": {
+      "type": "string",
+      "defaultValue": "https://index.docker.io",
+      "metadata": {
+        "description": "Container Registry, default Docker Hub"
+      }
+    },
+    "containerRegistryUsername": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Container Registry Username, default empty string for Docker Hub"
+      }
+    },
+    "containerRegistryPassword": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Container Registry Password, default empty string for Docker Hub"
+      }
+    },
+    "languages": {
+      "type": "string",
+      "defaultValue": "en,ar,zh",
+      "metadata": {
+        "description": "Languages to be loaded from LibreTranslate, separated by ,"
+      }
+    }
+  },
+  "variables": {
+    "registry": "[if(equals(parameters('containerRegistry'), 'https://index.docker.io'), '', format('{0}', replace(parameters('containerRegistry'), 'https://', '')))]",
+    "containerUsername": "[if(equals(parameters('containerRegistry'), 'https://index.docker.io'), '/libretranslate/', '/')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2020-12-01",
+      "name": "[parameters('appPlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('skuCapacity')]"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2021-01-15",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[format('hidden-related:{0}/providers/Microsoft.Web/serverfarms/appServicePlan', resourceGroup().id)]": "Resource"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "[format('DOCKER|{0}{1}libretranslate:latest', variables('registry'), variables('containerUsername'))]",
+          "appSettings": [
+            {
+              "name": "WEBSITES_PORT",
+              "value": "5000"
+            },
+            {
+              "name": "LT_LOAD_ONLY",
+              "value": "[parameters('languages')]"
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+              "value": "[parameters('containerRegistryUsername')]"
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+              "value": "[parameters('containerRegistryPassword')]"
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_URL",
+              "value": "[parameters('containerRegistry')]"
+            },
+            {
+              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+              "value": "false"
+            },
+            {
+              "name": "LT_DISABLE_WEB_UI",
+              "value": "false"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appPlanName'))]"
+      ]
+    }
+  ]
+}
